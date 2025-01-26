@@ -4,6 +4,7 @@ import requests
 from openai import OpenAI
 from dotenv import load_dotenv
 import argparse
+import subprocess
 
 def list_files_in_directory(directory):
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
@@ -25,7 +26,7 @@ def read_json(json_path):
 def save_wav(file_name, text, output_directory, api_key, voice_id):
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {
-        "Accept": "audio/wav",
+        "Accept": "audio/mpeg",
         "Content-Type": "application/json",
         "xi-api-key": api_key
     }
@@ -36,16 +37,32 @@ def save_wav(file_name, text, output_directory, api_key, voice_id):
             "similarity_boost": 0.5,
             "style": 0
         },
-        "model_id": "eleven_multilingual_v2"
+        "model_id": "eleven_multilingual_v2",
     }
 
     response = requests.post(url, json=payload, headers=headers)
 
     if response.status_code == 200:
-        output_path = os.path.join(output_directory, f"{os.path.splitext(file_name)[0]}.wav")
-        with open(output_path, 'wb') as audio_file:
-            audio_file.write(response.content)
-        print(f"WAV file saved: {output_path}")
+        wav_path = os.path.join(output_directory, f"{os.path.splitext(file_name)[0]}.wav")
+        
+        # Skapa ffmpeg-process som läser från stdin
+        process = subprocess.Popen([
+            "ffmpeg", "-y",
+            "-f", "mp3",  # Specificera input format
+            "-i", "pipe:0",  # Läs från stdin
+            "-acodec", "pcm_s16le",
+            "-ac", "1",
+            "-ar", "16000",
+            wav_path
+        ], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Skicka MP3-data direkt till ffmpeg
+        stdout, stderr = process.communicate(input=response.content)
+        
+        if process.returncode == 0:
+            print(f"WAV file saved: {wav_path}")
+        else:
+            print(f"Error converting audio: {stderr.decode()}")
     else:
         print(f"Error generating audio for {file_name}: {response.status_code}, {response.text}")
 
@@ -106,7 +123,11 @@ def main():
 
         for file_name, text in data.items():
             if text.strip():
-                save_wav(file_name, text, output_directory, elevenlabs_api_key, voice_id)
+                output_path = os.path.join(output_directory, f"{os.path.splitext(file_name)[0]}.wav")
+                if not os.path.exists(output_path): # Check if file exists
+                    save_wav(file_name, text, output_directory, elevenlabs_api_key, voice_id)
+                else:
+                    print(f"WAV file already exists for {file_name}. Skipping TTS generation.")
             else:
                 print(f"No text provided for {file_name}. Skipping.")
 
