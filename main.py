@@ -45,18 +45,16 @@ def save_wav(file_name, text, output_directory, api_key, voice_id):
     if response.status_code == 200:
         wav_path = os.path.join(output_directory, f"{os.path.splitext(file_name)[0]}.wav")
         
-        # Skapa ffmpeg-process som läser från stdin
         process = subprocess.Popen([
             "ffmpeg", "-y",
-            "-f", "mp3",  # Specificera input format
-            "-i", "pipe:0",  # Läs från stdin
+            "-f", "mp3",
+            "-i", "pipe:0",
             "-acodec", "pcm_s16le",
             "-ac", "1",
             "-ar", "16000",
             wav_path
         ], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         
-        # Skicka MP3-data direkt till ffmpeg
         stdout, stderr = process.communicate(input=response.content)
         
         if process.returncode == 0:
@@ -124,7 +122,7 @@ def main():
         for file_name, text in data.items():
             if text.strip():
                 output_path = os.path.join(output_directory, f"{os.path.splitext(file_name)[0]}.wav")
-                if not os.path.exists(output_path): # Check if file exists
+                if not os.path.exists(output_path):
                     save_wav(file_name, text, output_directory, elevenlabs_api_key, voice_id)
                 else:
                     print(f"WAV file already exists for {file_name}. Skipping TTS generation.")

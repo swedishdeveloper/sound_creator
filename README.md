@@ -12,19 +12,23 @@ A Python tool for managing and creating sound files for robot vacuum cleaners. T
 ## Installation
 
 1. Clone the project
-2. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+2. Install ffmpeg:
+   - On Ubuntu/Debian: `sudo apt-get install ffmpeg`
+   - On macOS: `brew install ffmpeg`
+   - On Windows: Download from https://ffmpeg.org/download.html
 
-3. Create a `.env` file with the following variables:
+3. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```
-OPENAI_API_KEY=your_openai_api_key
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id
-```
+4. Create a `.env` file with the following variables:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   ELEVENLABS_API_KEY=your_elevenlabs_api_key
+   ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id
+   ```
 
 ## Directory Structure
 
@@ -69,11 +73,14 @@ This will:
 The generated audio uses the following ElevenLabs settings:
 - Stability: 0.5
 - Similarity Boost: 0.5
+- Style: 0
 - Model: eleven_multilingual_v2
+- Output format: 16-bit PCM WAV, 16kHz, mono
 
 ## Requirements
 
 - Python 3.x
+- ffmpeg (for audio conversion)
 - OpenAI API key (for Whisper transcriptions)
 - ElevenLabs API key and voice ID (for text-to-speech)
 - Internet connection for API calls
